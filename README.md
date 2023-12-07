@@ -12,9 +12,12 @@
 
 [Day 6](#day-6)
 
+[Day 7](#day-7)
+
 
 ```python
 import re
+from collections import Counter
 
 def input(
         day: int,
@@ -343,4 +346,90 @@ print(q2)
     1084752
     question 2
     28228952
+
+
+# Day 7
+
+
+```python
+inp = input(7, listify=True, sample=True)
+inp = {i.split()[0]:int(i.split()[1]) for i in inp}
+
+def pair_val(key):
+    hand = Counter(key).values()
+    if 5 in hand:
+        pair = 6
+    elif 4 in hand:
+        pair = 5
+    elif 3 in hand and 2 in hand:
+        pair = 4
+    elif 3 in hand:
+        pair = 3
+    elif list(hand).count(2)==2:
+        pair = 2
+    elif 2 in hand:
+        pair = 1
+    else:
+        pair = 0
+    return pair*10**11
+
+cards = [
+    '2', '3', '4',
+    '5', '6', '7',
+    '8', '9', 'T',
+    'J', 'Q', 'K',
+    'A']
+
+def order_val(key):
+    order = ''
+    for k in key:
+        val = str(cards.index(k))
+        if len(val)==1:
+            order+='0'+val
+        else:
+            order+=val
+    return int(order)
+
+
+q1 = 0
+values = {}
+for key in inp:
+    pair = pair_val(key)
+    order = order_val(key)
+    values[pair+order]=key
+for i, key in enumerate(sorted(values.keys())):
+    q1 += (i+1)*inp[values[key]]
+
+q2 = 0
+values = {}
+cards = [
+    'J', '2', '3',
+    '4', '5', '6',
+    '7', '8', '9',
+    'T', 'Q', 'K',
+    'A']
+for key in inp:
+    if 'J' in key and len(set(key))>1:
+        key2 = key.replace(
+            'J',
+            Counter(key.replace('J','')).most_common(1)[0][0]
+            )
+    else:
+        key2 = key
+    pair = pair_val(key2)
+    order = order_val(key)
+    values[pair+order]=key
+for i, key in enumerate(sorted(values.keys())):
+    q2 += (i+1)*inp[values[key]]
+
+print('question 1')
+print(q1)
+print('question 2')
+print(q2)
+```
+
+    question 1
+    6440
+    question 2
+    5905
 
