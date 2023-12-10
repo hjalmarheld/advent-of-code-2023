@@ -14,10 +14,15 @@
 
 [Day 7](#day-7)
 
+[Day 8](#day-8)
+
+[Day 9](#day-9)
+
 
 ```python
 import re
 from collections import Counter
+from math import lcm
 
 def input(
         day: int,
@@ -432,4 +437,92 @@ print(q2)
     6440
     question 2
     5905
+
+
+# Day 8
+
+
+```python
+directions, nodes = input(8, sample=False).split('\n\n')
+
+
+graph = {}
+for node in nodes.splitlines():
+    name, left, right = re.findall('[0-9A-Z]+', node)
+    graph[name] = {}
+    graph[name]['L'] = left
+    graph[name]['R'] = right
+
+
+position, goal, steps = 'AAA', 'ZZZ', 0
+while position!=goal:
+    position = graph[position][directions[steps%len(directions)]]
+    steps+=1
+
+q1 = steps
+
+start_nodes, end_nodes, steps = set(), set(), []
+for node in graph:
+    if node[-1]=='A':
+        start_nodes.add(node)
+    if node[-1]=='Z':
+        end_nodes.add(node)
+
+for node in start_nodes:
+    position = node
+    _steps = 0
+    while position not in end_nodes:
+        position = graph[position][directions[_steps%len(directions)]]
+        _steps+=1
+    steps.append(_steps)
+
+q2 = lcm(*steps)
+
+print('question 1')
+print(q1)
+print('question 2')
+print(q2)
+```
+
+    question 1
+    20659
+    question 2
+    15690466351717
+
+
+# Day 9
+
+
+```python
+inp = input(9, listify=True, sample=False)
+inp = [list(map(int, i.split())) for i in inp]
+
+q1, q2 = 0, 0
+for i in inp: 
+    levels = [i]
+    while set(levels[-1])!=set([0]):
+        level = []
+        for i in range(len(levels[-1])-1):
+            level.append(levels[-1][i+1]-levels[-1][i])
+        levels.append(level)
+    
+    next_val = sum([l[-1] for l in levels])
+    q1+=next_val
+
+    ls = [l[0] for l in levels]
+    next_val2 = 0
+    for l in ls[::-1]:
+        next_val2 = l-next_val2
+    q2+=next_val2
+
+print('question 1')
+print(q1)
+print('question 2')
+print(q2)
+```
+
+    question 1
+    2101499000
+    question 2
+    1089
 
