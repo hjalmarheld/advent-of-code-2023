@@ -18,10 +18,15 @@
 
 [Day 9](#day-9)
 
+[Day 10](#day-10)
+
+[Day 11](#day-11)
+
 
 ```python
 import re
-from collections import Counter
+from collections import Counter, deque
+from itertools import combinations
 from math import lcm
 
 def input(
@@ -201,15 +206,12 @@ for y, row in enumerate(inp):
             else:
                 seen_gears[num.geared] = num.value
 
-print('question 1')
-print(q1)
-print('question 2')
-print(q2)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
 
-    question 1
+    question 1:
     4361
-    question 2
+    question 2:
     467835
 
 
@@ -231,15 +233,12 @@ for i, c in enumerate(count):
             count[j]+=c
 q2 = sum(count)
 
-print('question 1')
-print(q1)
-print('question 2')
-print(q2)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
 
-    question 1
+    question 1:
     23941
-    question 2
+    question 2:
     5571760
 
 
@@ -305,16 +304,12 @@ for start, size in zip(seeds[::2], seeds[1::2]):
   destinations.append(min(seed_range)[0])
 q2 = min(destinations)
 
-
-print('question 1')
-print(q1)
-print('question 2')
-print(q2)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
 
-    question 1
+    question 1:
     910845529
-    question 2
+    question 2:
     77435348
 
 
@@ -341,15 +336,12 @@ b = time/2 - ((time/2)**2 - dist)**.5
 
 q2 = int(a)-int(b)
 
-print('question 1')
-print(q1)
-print('question 2')
-print(q2)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
 
-    question 1
+    question 1:
     1084752
-    question 2
+    question 2:
     28228952
 
 
@@ -427,15 +419,12 @@ for key in inp:
 for i, key in enumerate(sorted(values.keys())):
     q2 += (i+1)*inp[values[key]]
 
-print('question 1')
-print(q1)
-print('question 2')
-print(q2)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
 
-    question 1
+    question 1:
     6440
-    question 2
+    question 2:
     5905
 
 
@@ -478,15 +467,12 @@ for node in start_nodes:
 
 q2 = lcm(*steps)
 
-print('question 1')
-print(q1)
-print('question 2')
-print(q2)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
 
-    question 1
+    question 1:
     20659
-    question 2
+    question 2:
     15690466351717
 
 
@@ -515,14 +501,196 @@ for i in inp:
         next_val2 = l-next_val2
     q2+=next_val2
 
-print('question 1')
-print(q1)
-print('question 2')
-print(q2)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
 
-    question 1
+    question 1:
     2101499000
-    question 2
+    question 2:
     1089
+
+
+# Day 10
+
+
+```python
+M = [list(i) for i in input(10, sample=False, listify=True)]
+
+for x in range(len(M)):
+  for y in range(len(M[0])):
+    if M[x][y]=='S':
+      x1, y1 = x, y
+      up = (M[x-1][y] in ['|','7','F'])
+      right = (M[x][y+1] in ['-','7','J'])
+      down = (M[x+1][y] in ['|','L','J'])
+      left = (M[x][y-1] in ['-','L','F'])
+
+      if up and down:
+        M[x][y]='|'
+        d1 = 0
+      elif up and right:
+        M[x][y]='L'
+        d1 = 0
+      elif up and left:
+        M[x][y]='J'
+        d1 = 0
+      elif down and right:
+        M[x][y]='F'
+        d1 = 2
+      elif down and left:
+        M[x][y]='7'
+        d1 = 2
+      elif left and right:
+        M[x][y]='-'
+        d1 = 1
+
+x, y, d = x1, y1, d1
+dist = 0
+while True:
+  dist += 1
+  x += [-1,0,1,0][d]
+  y += [0,1,0,-1][d]
+  if (x,y) == (x1,y1):
+    q1=dist//2
+    break
+  elif M[x][y] in ['-', '|']:
+    pass
+  elif M[x][y]=='L':
+    if d==2:
+      d = 1
+    else:
+      d = 0
+  elif M[x][y]=='J':
+    if d==1:
+      d = 0
+    else:
+      d = 3
+  elif M[x][y]=='7':
+    if d==0:
+      d = 3
+    else:
+      d = 2
+  elif M[x][y]=='F':
+    if d==0:
+      d = 1
+    else:
+      d = 2
+  
+
+R2 = 3*len(M)
+C2 = 3*len(M[0])
+M2 = [['.' for _ in range(C2)] for _ in range(R2)]
+for x in range(len(M)):
+  for y in range(len(M[0])):
+    if M[x][y]=='|':
+      M2[3*x+0][3*y+1] = '#'
+      M2[3*x+1][3*y+1] = '#'
+      M2[3*x+2][3*y+1] = '#'
+    elif M[x][y]=='-':
+      M2[3*x+1][3*y+0] = '#'
+      M2[3*x+1][3*y+1] = '#'
+      M2[3*x+1][3*y+2] = '#'
+    elif M[x][y]=='7':
+      M2[3*x+1][3*y+0] = '#'
+      M2[3*x+1][3*y+1] = '#'
+      M2[3*x+2][3*y+1] = '#'
+    elif M[x][y]=='F':
+      M2[3*x+2][3*y+1] = '#'
+      M2[3*x+1][3*y+1] = '#'
+      M2[3*x+1][3*y+2] = '#'
+    elif M[x][y]=='J':
+      M2[3*x+1][3*y+0] = '#'
+      M2[3*x+1][3*y+1] = '#'
+      M2[3*x+0][3*y+1] = '#'
+    elif M[x][y]=='L':
+      M2[3*x+0][3*y+1] = '#'
+      M2[3*x+1][3*y+1] = '#'
+      M2[3*x+1][3*y+2] = '#'
+
+
+to_visit = deque()
+seen = set()
+# up right down left
+for x in range(R2):
+  to_visit.append((x,0))
+  to_visit.append((x,C2-1))
+for y in range(C2):
+  to_visit.append((0,y))
+  to_visit.append((R2-1,y))
+while to_visit:
+  x,y = to_visit.popleft()
+  if (x,y) in seen or not (0<=x<R2 and 0<=y<C2):
+    continue
+  seen.add((x,y))
+  if M2[x][y]=='#':
+    continue
+  for d in range(4):
+    to_visit.append((x+[-1,0,1,0][d],y+[0,1,0,-1][d]))
+
+q2 = 0
+for x in range(len(M)):
+  for y in range(len(M[0])):
+    visited = False
+    for xx in [0,1,2]:
+      for yy in [0,1,2]:
+        if (3*x+xx,3*y+yy) in seen:
+          visited = True
+    if not visited:
+      q2 += 1
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    6867
+    question 2:
+    595
+
+
+# Day 11
+
+
+```python
+inp = [list(i) for i in input(11, listify=True, sample=False)]
+
+def expand_rows(M):
+    M2 = []
+    for row in M:
+        M2.append(row)
+        if not '#' in row:
+            M2.append(row)
+    return M2
+
+def get_locs(M):
+    locs = []
+    for x, row in enumerate(M):
+        for y, char in enumerate(row):
+            if char=='#':
+                locs.append((x, y))
+    return locs
+
+def manhattan(a, b):
+    return sum(abs(val1-val2) for val1, val2 in zip(a,b))
+
+# expand rows, flip, expand cols, flip again
+future = (list(
+    map(list, zip(*expand_rows(list(
+        map(list, zip(*expand_rows(inp)))))))))
+
+# get star locations
+locs_start = get_locs(inp)
+locs_future = get_locs(future)
+
+# calculate manhattan distances and multiply with delta for q2
+q1 = sum([manhattan(a, b) for a, b in combinations(locs_future, 2)])
+q2 = sum([manhattan(a, b) for a, b in combinations(locs_start, 2)])
+q2 = q2+(q1-q2)*(10**6-1)
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    9563821
+    question 2:
+    827009909817
 
