@@ -27,23 +27,9 @@
 import re
 from collections import Counter, deque
 from itertools import combinations
+from functools import cache
 from math import lcm
-
-def input(
-        day: int,
-        sample: bool=True,
-        listify: bool=False):
-    if sample:
-        filename='sample'
-    else:
-        filename='input'
-    with open(f'data/{day}/{filename}.txt') as file:
-        data = file.read()
-
-    if listify:
-        data = data.splitlines()
-
-    return data
+from utils import *
 ```
 
 # Day 1
@@ -514,7 +500,7 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 
 
 ```python
-M = [list(i) for i in input(10, sample=False, listify=True)]
+M = input(10, sample=False, arrayify=True)
 
 for x in range(len(M)):
   for y in range(len(M[0])):
@@ -651,7 +637,7 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 
 
 ```python
-inp = [list(i) for i in input(11, listify=True, sample=False)]
+inp = input(11, arrayify=True, sample=False)
 
 def expand_rows(M):
     M2 = []
@@ -661,25 +647,23 @@ def expand_rows(M):
             M2.append(row)
     return M2
 
-def get_locs(M):
-    locs = []
-    for x, row in enumerate(M):
-        for y, char in enumerate(row):
-            if char=='#':
-                locs.append((x, y))
-    return locs
-
 def manhattan(a, b):
     return sum(abs(val1-val2) for val1, val2 in zip(a,b))
 
 # expand rows, flip, expand cols, flip again
-future = (list(
-    map(list, zip(*expand_rows(list(
-        map(list, zip(*expand_rows(inp)))))))))
+future = (
+    matrix.transpose(
+        expand_rows(
+            matrix.transpose(
+                expand_rows(inp)
+            )
+        )
+    )
+)
 
 # get star locations
-locs_start = get_locs(inp)
-locs_future = get_locs(future)
+locs_start = matrix.get_locs(inp, '#')
+locs_future = matrix.get_locs(future, '#')
 
 # calculate manhattan distances and multiply with delta for q2
 q1 = sum([manhattan(a, b) for a, b in combinations(locs_future, 2)])
@@ -693,4 +677,47 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     9563821
     question 2:
     827009909817
+
+
+# Day 12
+
+
+```python
+inp = [i.split() for i in input(12, listify=True, sample=False)]
+rows = [(row, tuple(map(int, size.split(",")))) for row, size in inp]
+@cache
+def get_num(row, sizes, done=0):
+    # if not enough left return
+    if len(row)+done<sum(sizes):
+        return False
+    # if end of row return if finished
+    if not row:
+        return not sizes and not done
+    num = 0
+
+    # create branching if unknown
+    chars = [".", "#"] if row[0] == "?" else row[0]
+    
+    for c in chars:
+        # if broken keep going on group
+        if c == "#":
+            num += get_num(row[1:], sizes, done + 1)
+        # if not then check if previous group done
+        else:
+            if done:
+                if sizes and sizes[0] == done:
+                    num += get_num(row[1:], sizes[1:])
+            else:
+                num += get_num(row[1:], sizes)
+    return num
+
+q1=sum(get_num(group + ".", sizes) for group, sizes in rows)
+q2=sum(get_num("?".join([group] * 5) + ".", sizes * 5) for group, sizes in rows)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    7705
+    question 2:
+    50338344809230
 
