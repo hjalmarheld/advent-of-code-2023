@@ -22,6 +22,10 @@
 
 [Day 11](#day-11)
 
+[Day 12](#day-12)
+
+[Day 13](#day-13)
+
 
 ```python
 import re
@@ -720,4 +724,45 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     7705
     question 2:
     50338344809230
+
+
+# Day 13
+
+
+```python
+inp = [i.splitlines() for i in input(13, sample=False).split('\n\n')]
+
+def check_reflection(M):
+    for i in range(1,len(M)):
+        if M[max(0, 2*i-len(M)):i]==M[i:2*i][::-1]:
+            return i
+    return 0
+
+def check_reflection2(M):
+    for i in range(1,len(M)):
+        if type(M[0])==list:
+            M = [''.join(i) for i in M]
+        a = ''.join(M[max(0, 2*i-len(M)):i])
+        b = ''.join(M[i:2*i][::-1])
+        if sum([1 if a_!=b_ else 0 for a_, b_ in zip(a, b)])==1:
+            return i
+    return 0
+
+q1 = sum([
+    max(100*check_reflection(scan),check_reflection(matrix.transpose(scan)))
+    for scan in inp
+    ])
+
+q2 = sum([
+    max(100*check_reflection2(scan), check_reflection2(matrix.transpose(scan)))
+    for scan in inp
+    ])
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    37561
+    question 2:
+    31108
 

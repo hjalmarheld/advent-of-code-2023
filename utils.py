@@ -36,4 +36,4 @@ class matrix:
     def transpose(
             M:list[list]
         ):
-        return map(list, zip(*M))
+        return list(map(list, zip(*M)))
