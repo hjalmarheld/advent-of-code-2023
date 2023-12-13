@@ -424,7 +424,6 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```python
 directions, nodes = input(8, sample=False).split('\n\n')
 
-
 graph = {}
 for node in nodes.splitlines():
     name, left, right = re.findall('[0-9A-Z]+', node)
@@ -748,15 +747,17 @@ def check_reflection2(M):
             return i
     return 0
 
-q1 = sum([
-    max(100*check_reflection(scan),check_reflection(matrix.transpose(scan)))
-    for scan in inp
-    ])
-
-q2 = sum([
-    max(100*check_reflection2(scan), check_reflection2(matrix.transpose(scan)))
-    for scan in inp
-    ])
+q1 = 0
+q2 = 0
+for scan in inp:
+    q1 += max(
+        100*check_reflection(scan),
+        check_reflection(matrix.transpose(scan))
+    )
+    q2 += max(
+        100*check_reflection2(scan),
+        check_reflection2(matrix.transpose(scan))
+    )
 
 print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
