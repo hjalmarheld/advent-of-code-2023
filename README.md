@@ -697,10 +697,8 @@ def get_num(row, sizes, done=0):
     if not row:
         return not sizes and not done
     num = 0
-
     # create branching if unknown
     chars = [".", "#"] if row[0] == "?" else row[0]
-    
     for c in chars:
         # if broken keep going on group
         if c == "#":
@@ -729,35 +727,24 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 
 
 ```python
-inp = [i.splitlines() for i in input(13, sample=False).split('\n\n')]
-
-def check_reflection(M):
-    for i in range(1,len(M)):
-        if M[max(0, 2*i-len(M)):i]==M[i:2*i][::-1]:
-            return i
-    return 0
-
-def check_reflection2(M):
+def check_reflection(M, smudges=0):
     for i in range(1,len(M)):
         if type(M[0])==list:
             M = [''.join(i) for i in M]
         a = ''.join(M[max(0, 2*i-len(M)):i])
         b = ''.join(M[i:2*i][::-1])
-        if sum([1 if a_!=b_ else 0 for a_, b_ in zip(a, b)])==1:
+        if sum([1 for a_, b_ in zip(a, b) if a_!=b_])==smudges:
             return i
     return 0
 
-q1 = 0
-q2 = 0
-for scan in inp:
+q1 = q2 = 0
+for scan in [i.splitlines() for i in input(13, sample=False).split('\n\n')]:
     q1 += max(
-        100*check_reflection(scan),
-        check_reflection(matrix.transpose(scan))
-    )
+        100*check_reflection(scan, 0),
+        check_reflection(matrix.transpose(scan), 0))
     q2 += max(
-        100*check_reflection2(scan),
-        check_reflection2(matrix.transpose(scan))
-    )
+        100*check_reflection(scan, 1),
+        check_reflection(matrix.transpose(scan), 1))
 
 print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
