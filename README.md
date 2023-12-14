@@ -26,6 +26,8 @@
 
 [Day 13](#day-13)
 
+[Day 14](#day-14)
+
 
 ```python
 import re
@@ -753,4 +755,46 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     37561
     question 2:
     31108
+
+
+# Day 14
+
+
+```python
+M = input(14, arrayify=True, sample=False)
+
+def tilt(M):
+    round = deque(matrix.get_locs(M, 'O'))
+    while round:
+        x, y = round.popleft()
+        if x>0 and M[x-1][y]=='.':
+            M[x-1][y], M[x][y] = 'O', '.'
+            round.append((x-1, y))
+    return M
+
+q1 = sum([len(M) - loc[0] for loc in matrix.get_locs(tilt(M), 'O')])
+
+i = 1
+seen = {}
+while i <= 1000000000:
+    for spin in range(4):
+        rocks = tuple(matrix.get_locs(M, 'O'))
+        if (rocks, spin) in seen:
+            old_i = seen[(rocks, spin)]
+            skip = (1000000000 - i) // (i - old_i)
+            i += (i - old_i) * skip
+            seen = {}
+        else:
+            seen[rocks, spin] = i
+        M = matrix.turn(tilt(M))
+    i+=1
+q2 = sum([len(M) - loc[0] for loc in matrix.get_locs(M, 'O')])
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    106990
+    question 2:
+    100531
 

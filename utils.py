@@ -42,6 +42,15 @@ class matrix:
         """
         return list(map(list, zip(*M)))
     
+    @staticmethod
+    def turn(
+            M:list[list]
+        ) -> list[list]:
+        """
+        turn list of lists 90 deg clockwise
+        """
+        return list(map(list,(zip(*reversed(M)))))
+    
 
     @staticmethod
     def get_neighbors(
