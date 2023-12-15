@@ -32,6 +32,16 @@ class matrix:
                     locs.append((x, y))
         return locs
     
+    @staticmethod
+    def replace(
+            M:list[list],
+            s1=...,
+            s2=...
+        ) -> list[list]:
+        for x, y in matrix.get_locs(M, s1):
+            M[x][y] = s2
+        return M
+
 
     @staticmethod
     def transpose(

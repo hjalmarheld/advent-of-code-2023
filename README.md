@@ -26,8 +26,6 @@
 
 [Day 13](#day-13)
 
-[Day 14](#day-14)
-
 
 ```python
 import re
@@ -778,14 +776,14 @@ i = 1
 seen = {}
 while i <= 1000000000:
     for spin in range(4):
-        rocks = tuple(matrix.get_locs(M, 'O'))
-        if (rocks, spin) in seen:
-            old_i = seen[(rocks, spin)]
+        rocks = tuple(matrix.get_locs(tilt(M), 'O'))
+        if rocks in seen:
+            old_i = seen[rocks]
             skip = (1000000000 - i) // (i - old_i)
             i += (i - old_i) * skip
             seen = {}
         else:
-            seen[rocks, spin] = i
+            seen[rocks] = i
         M = matrix.turn(tilt(M))
     i+=1
 q2 = sum([len(M) - loc[0] for loc in matrix.get_locs(M, 'O')])
@@ -797,4 +795,46 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     106990
     question 2:
     100531
+
+
+# Day 15
+
+
+```python
+inp = input(15, sample=False).split(',')
+
+def hashmap(code):
+    val = 0
+    for char in code:
+        val = ((val+ord(char))*17)%256
+    return val
+
+q1 = sum([hashmap(code) for code in inp])
+
+boxes = [[] for _ in range(256)]
+for code in inp:
+    name = re.findall('[a-z]+', code)[0]
+    box = boxes[hashmap(name)]
+    if code[-1]=='-':
+        box = [(n,v) for (n,v) in box if n!=name]
+    elif code[-2]=='=':
+        len_ = int(code[-1])
+        if name in [n for (n,v) in box]:
+            box = [(n, len_ if name==n else v) for (n,v) in box]
+        else:
+            box.append((name, len_))
+    boxes[hashmap(name)] = box 
+
+q2 = 0
+for i,box in enumerate(boxes):
+  for j,(n,v) in enumerate(box):
+    q2 += (i+1)*(j+1)*v
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    513643
+    question 2:
+    265345
 
