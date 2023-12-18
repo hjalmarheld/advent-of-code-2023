@@ -640,7 +640,7 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 
 
 ```python
-inp = input(11, arrayify=True, sample=False)
+inp = input(11, matrixify=True, sample=False)
 
 def expand_rows(M):
     M2 = []
@@ -648,25 +648,17 @@ def expand_rows(M):
         M2.append(row)
         if not '#' in row:
             M2.append(row)
-    return M2
+    return Matrix(M2)
 
 def manhattan(a, b):
     return sum(abs(val1-val2) for val1, val2 in zip(a,b))
 
 # expand rows, flip, expand cols, flip again
-future = (
-    matrix.transpose(
-        expand_rows(
-            matrix.transpose(
-                expand_rows(inp)
-            )
-        )
-    )
-)
+future = expand_rows(expand_rows(inp).transpose()).transpose()
 
 # get star locations
-locs_start = matrix.get_locs(inp, '#')
-locs_future = matrix.get_locs(future, '#')
+locs_start = inp.get_locs('#')
+locs_future = future.get_locs('#')
 
 # calculate manhattan distances and multiply with delta for q2
 q1 = sum([manhattan(a, b) for a, b in combinations(locs_future, 2)])
@@ -837,4 +829,133 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     513643
     question 2:
     265345
+
+
+# Day 16
+
+
+```python
+inp = input(16, arrayify=True, sample=False)
+
+def walk(r, c, d):
+    '''
+    position and direction after 
+    taking one step
+    '''
+    dr = [-1, 0, 1, 0]
+    dc = [0, 1, 0, -1]
+    return (r+dr[d], c+dc[d], d)
+
+def moves(r, c, d, M):
+    positions = [(r, c, d)]
+    visited = set()
+    done = set()
+    while True:
+        new_positions = []
+        if not positions:
+            break
+        for r, c, d in positions:
+            if 0<=r<len(M) and 0<=c<len(M[0]):
+                visited.add((r, c))
+                if (r, c, d) in done:
+                    continue
+                done.add((r,c,d))
+                char = M[r][c]
+                if char=='.':
+                    new_positions.append(
+                        walk(r,c,d))
+                elif char=='/':
+                    new_positions.append(
+                        walk(r,c,{0:1, 1:0, 2:3, 3:2}[d]))
+                elif char=='\\':
+                    new_positions.append(
+                        walk(r,c,{0:3, 1:2, 2:1, 3:0}[d]))
+                elif char=='|':
+                    if d in [0,2]:
+                        new_positions.append(
+                            walk(r,c,d))
+                    else:
+                        new_positions.append(
+                            walk(r, c, 0))
+                        new_positions.append(
+                            walk(r, c, 2))
+                elif char=='-':
+                    if d in [1,3]:
+                        new_positions.append(
+                            walk(r,c,d))
+                    else:
+                        new_positions.append(
+                            walk(r, c, 1))
+                        new_positions.append(
+                            walk(r, c, 3))
+        positions = new_positions
+    return len(visited)
+
+q1 = moves(0,0,1, inp)
+
+q2 = 0
+rows = len(inp)
+cols = len(inp[0])
+for r in range(rows):
+    q2 = max(moves(r, 0, 1, inp), q2)
+    q2 = max(moves(r, cols-1, 3, inp), q2)
+for c in range(cols):
+    q2 = max(moves(0, c, 2, inp), q2)
+    q2 = max(moves(rows-1, c, 0, inp), q2)
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    7111
+    question 2:
+    7831
+
+
+# Day 17
+
+# Day 18
+
+
+```python
+def walk(position, d, steps=1):
+    r, c = position
+    dr = {'D':1, 'R':0, 'U':-1, 'L':0}[d]*int(steps)
+    dc = {'D':0, 'R':1, 'U':0, 'L':-1}[d]*int(steps)
+    return (r+dr, c+dc)
+
+def area(p):
+    return 0.5 * abs(sum(x0*y1 - x1*y0
+        for ((x0, y0), (x1, y1))
+        in zip(p, p[1:] + [p[0]])))
+
+position = position2 = (0, 0)
+seen1 = []
+seen2 = []
+walked1 = walked2 = 0
+for row in input(18, listify=True, sample=False):
+    dir, steps, colour = row.split()
+
+    seen1.append(position:=walk(
+        position,
+        dir,
+        steps))
+    walked1 += int(steps)
+
+    seen2.append(position2:=walk(
+        position2,
+        'RDLU'[int(colour[-2])],
+        steps:=int(colour[1:-2].replace('#', '0'), 16)))
+    walked2 += steps
+
+q1 = area(seen1)+walked1/2+1
+q2 = area(seen2)+walked2/2+1
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    42317.0
+    question 2:
+    83605563360288.0
 
