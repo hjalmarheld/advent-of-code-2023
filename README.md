@@ -26,10 +26,6 @@
 
 [Day 13](#day-13)
 
-[Day 14](#day-14)
-
-[Day 15](#day-15)
-
 
 ```python
 import re
@@ -839,7 +835,7 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 
 
 ```python
-inp = input(16, arrayify=True, sample=False)
+inp = input(16, matrixify=True, sample=False)
 
 def walk(r, c, d):
     '''
@@ -864,7 +860,7 @@ def moves(r, c, d, M):
                 if (r, c, d) in done:
                     continue
                 done.add((r,c,d))
-                char = M[r][c]
+                char = M[r,c]
                 if char=='.':
                     new_positions.append(
                         walk(r,c,d))
@@ -934,8 +930,7 @@ def area(p):
         in zip(p, p[1:] + [p[0]])))
 
 position = position2 = (0, 0)
-seen1 = []
-seen2 = []
+seen1, seen2 = [], []
 walked1 = walked2 = 0
 for row in input(18, listify=True, sample=False):
     dir, steps, colour = row.split()
@@ -963,3 +958,88 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     question 2:
     83605563360288.0
 
+
+# Day 19
+
+
+```python
+conds, parts = (i.splitlines() for i in input(19, sample=True).split('\n\n'))
+
+class Flow:
+    def __init__(self, rule_list):
+        self.conditions = self.parse(rule_list)
+
+    def parse(self, rule_list):
+        conditions = {}
+        for rule in rule_list[:-1]:
+            cond, dest = rule.split(':')
+            conditions[cond]=dest
+        conditions['last']=rule_list[-1]
+        return conditions
+    
+    def asses(self, item):
+        for cond, dest in self.conditions.items():
+            if eval('item.'+cond):
+                return dest
+    
+class Item:
+    def __init__(self, attributes):
+        self.total = 0
+        for item in attributes[1:-1].split(','):
+            name, value = item.split('=')
+            setattr(self, name, int(value))
+            self.total+=int(value)
+        self.last=True
+
+flows = {}
+for line in conds:
+    name, rules = line.split('{')
+    flows[name] = Flow(rules.split('}')[0].split(','))
+
+q1 = 0
+for item in parts:
+    item = Item(item)
+    flow = 'in'
+    while True:
+        flow = flows[flow].asses(item)
+        if flow in ('A', 'R'):
+            if flow=='A':
+                q1 += item.total
+            break
+
+q1
+```
+
+
+
+
+    19114
+
+
+
+
+```python
+from tqdm import tqdm
+```
+
+
+```python
+# multiprocessing??
+#   0%|          | 0/4000 [04:33<?, ?it/s]
+# nope
+def do_fast(x):
+    total = 0
+    for m in tqdm(range(1,4001)):
+        for a in range(1,4001):
+            for s in range(1,4001):
+                it = Item('{'+f'x={x},m={m},a={a},s={s}'+'}')
+                flow = 'in'
+                while True:
+                    flow = flows[flow].asses(it)
+                    if flow in ('A', 'R'):
+                        if flow=='A':
+                            total+=1
+                        break
+    return total
+                
+```

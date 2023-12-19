@@ -171,6 +171,9 @@ class Matrix(list):
     def __repr__(self):
         return self.__str__()
     
+    def __len__(self):
+        return len(self.M)
+    
     def __add__(self, s:...):
         return Matrix([[item+s for item in row] for row in self.M])
     
