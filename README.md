@@ -36,6 +36,8 @@
 
 [Day 19](#day-19)
 
+[Day 20](#day-20)
+
 
 ```python
 import re
@@ -1069,4 +1071,128 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     19114
     question 2:
     167409079868000
+
+
+# Day 20
+
+
+```python
+class FlipFlop:
+    def __init__(self, recipients, name):
+        self.name = name
+        self.state = 'off'
+        self.recipients = recipients
+
+    def actions(self, signal, name):
+        if signal=='h':
+            pass
+        else:
+            self.state= 'on' if self.state=='off' else 'off'
+            if self.state =='on':
+                return ('h', self.recipients, self.name)
+            else:
+                return ('l', self.recipients, self.name)
+            
+class Conjunction:
+    def __init__(self, recipients, name):
+        self.name = name
+        self.states = {}
+        self.recipients = recipients
+
+    def actions(self, signal, name):
+        self.states[name] = signal
+        if set(self.states.values())==set('h'):
+            return ('l', self.recipients, self.name)
+        else:
+            return ('h', self.recipients, self.name)
+        
+class Broadcast:
+    def __init__(self, recipients, name):
+        self.name = name
+        self.recipients = recipients
+        self.name = name
+
+    def actions(self, signal, name):
+        return (signal, self.recipients, self.name)
+
+    
+def parser(input):
+    # create dict of all components
+    components = {}
+    for component in input:
+        component, recipients = component.split(' -> ')
+        recipients = recipients.split(', ')
+        if '%' in component:
+            components[component[1:]] = FlipFlop(recipients, component[1:])
+        elif '&' in component:
+            components[component[1:]] = Conjunction(recipients, component[1:])
+        else:
+            components[component] = Broadcast(recipients, component)
+    # set states for all Conjunctions
+    for component in components.values():
+        for recipient in component.recipients:
+            try:
+                if type(components[recipient])==Conjunction:
+                    components[recipient].states[component.name]='l'
+            except:
+                pass
+    return components
+
+inp = input(20, listify=True, sample=False)    
+components = parser(inp)
+
+l = 0
+h = 0
+for _ in range(1000):
+    button = ('l', ['broadcaster'], 'button')
+    queue = [button]
+    while queue:
+        signal, recipients, name = queue.pop(0)
+        for recipient in recipients:
+            if signal=='h':
+                h+=1
+            else:
+                l+=1
+            if recipient in components:
+                reponse = components[recipient].actions(signal, name)
+                if reponse: queue.append(reponse)
+
+components = parser(inp)
+
+# find component giving signal to rx
+for component in components.values():
+    if 'rx' in component.recipients:
+        comp = component
+
+min_turns = {}
+done = False
+i = 1
+while True:
+    button = ('l', ['broadcaster'], 'button')
+    queue = [button]
+    while queue:
+        signal, recipients, name = queue.pop(0)
+        for recipient in recipients:
+            if recipient in components:
+                reponse = components[recipient].actions(signal, name)
+                if reponse: queue.append(reponse)
+            if recipient==comp.name and signal=='h':
+                if name not in min_turns:
+                    min_turns[name]=i
+                    if len(min_turns)==len(comp.states):
+                        done = True
+    if done:
+        break
+    else:
+        i+=1
+
+q1 = h*l
+q2 = lcm(*list(min_turns.values()))
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    856482136
+    question 2:
+    224046542165867
 
