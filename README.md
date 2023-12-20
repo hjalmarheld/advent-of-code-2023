@@ -26,6 +26,16 @@
 
 [Day 13](#day-13)
 
+[Day 14](#day-14)
+
+[Day 15](#day-15)
+
+[Day 16](#day-16)
+
+[Day 18](#day-18)
+
+[Day 19](#day-19)
+
 
 ```python
 import re
@@ -963,83 +973,100 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 
 
 ```python
-conds, parts = (i.splitlines() for i in input(19, sample=True).split('\n\n'))
+def cond_parser(conds):
+    conditions = {}
+    for cond in conds:
+        name, conds = cond.split('{')
+        conds = conds[:-1].split(',')
+        parsed = []
+        for cond in conds[:-1]:
+            cond, dest = cond.split(':')
+            key, num = cond.split(sep:='>' if '>' in cond else '<')
+            parsed.append({'var':key, 'num':int(num), 'sep':sep, 'dest':dest})
+        parsed.append(conds[-1])
+        conditions[name] = parsed
+    return conditions
 
-class Flow:
-    def __init__(self, rule_list):
-        self.conditions = self.parse(rule_list)
-
-    def parse(self, rule_list):
-        conditions = {}
-        for rule in rule_list[:-1]:
-            cond, dest = rule.split(':')
-            conditions[cond]=dest
-        conditions['last']=rule_list[-1]
-        return conditions
-    
-    def asses(self, item):
-        for cond, dest in self.conditions.items():
-            if eval('item.'+cond):
-                return dest
-    
-class Item:
-    def __init__(self, attributes):
-        self.total = 0
-        for item in attributes[1:-1].split(','):
+def part_parser(parts):
+    parts_parsed = []
+    for part in parts:
+        items = {}
+        items['total'] = 0
+        for item in part[1:-1].split(','):
             name, value = item.split('=')
-            setattr(self, name, int(value))
-            self.total+=int(value)
-        self.last=True
+            items[name] = int(value)
+            items['total'] += int(value)
+        parts_parsed.append(items)
+    return parts_parsed
 
-flows = {}
-for line in conds:
-    name, rules = line.split('{')
-    flows[name] = Flow(rules.split('}')[0].split(','))
+def passing(conditions, parts):
+    passing = 0
+    for part in parts:
+        flow = 'in'
+        while True:
+            # see if finished all rules of a flow
+            if flow in ('A', 'R'):
+                if flow=='A':
+                    passing += part['total']
+                break
+            cond = conditions[flow]
+            # else try rules
+            for rule in cond[:-1]:
+                # see if passing a rule
+                if passed:= eval(f'{part[rule["var"]]} {rule["sep"]} {rule["num"]}'):
+                    break
+            # return destination if passed
+            if passed:
+                flow = rule['dest']
+            else:
+                flow = cond[-1]
+    return passing
 
-q1 = 0
-for item in parts:
-    item = Item(item)
-    flow = 'in'
-    while True:
-        flow = flows[flow].asses(item)
-        if flow in ('A', 'R'):
-            if flow=='A':
-                q1 += item.total
-            break
+def new_ranges(rule, ranges):
+    # create ranges inside and outside of conditions
+    if rule['sep'] == ">":
+        var_in = (rule['num']+1, ranges[rule['var']][1])
+        var_out = (ranges[rule['var']][0], rule['num'])
+    else:
+        var_in = (ranges[rule['var']][0], rule['num']-1)
+        var_out = (rule['num'], ranges[rule['var']][1])
+    # avoid changing mutable objects...
+    inside, outside = ranges.copy(), ranges.copy()
+    inside[rule['var']], outside[rule['var']] = var_in, var_out
+    return inside, outside
 
-q1
-```
-
-
-
-
-    19114
-
-
-
-
-```python
-from tqdm import tqdm
-```
-
-
-```python
-# multiprocessing??
-#   0%|          | 0/4000 [04:33<?, ?it/s]
-# nope
-def do_fast(x):
+def combos(flow, ranges, conditions):
     total = 0
-    for m in tqdm(range(1,4001)):
-        for a in range(1,4001):
-            for s in range(1,4001):
-                it = Item('{'+f'x={x},m={m},a={a},s={s}'+'}')
-                flow = 'in'
-                while True:
-                    flow = flows[flow].asses(it)
-                    if flow in ('A', 'R'):
-                        if flow=='A':
-                            total+=1
-                        break
+    # end of recursion
+    if flow == "A":
+        total = 1
+        for low, high in ranges.values():
+            total*=(high-low+1)
+        return total
+    elif flow == "R":
+        return 0
+    # get rules for a flow
+    for rule in conditions[flow][:-1]:
+        # get range passing and outside of rule
+        inside, outside = new_ranges(rule, ranges)
+        # send succesful to destination if inside
+        total += combos(rule['dest'], inside, conditions)
+        # save outside to try next condition
+        ranges = outside
+    # get flow for ranges missing all conditios
+    total += combos(conditions[flow][-1], outside, conditions)
     return total
-                
+
+conds, parts = (i.splitlines() for i in input(19, sample=True).split('\n\n'))
+conditions = cond_parser(conds)
+parts = part_parser(parts)
+q1 = passing(conditions, parts)
+q2 = combos('in', {var:(1,4000) for var in 'xmas'}, conditions=conditions)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 ```
+
+    question 1:
+    19114
+    question 2:
+    167409079868000
+
