@@ -38,6 +38,8 @@
 
 [Day 20](#day-20)
 
+[Day 21](#day-21)
+
 
 ```python
 import re
@@ -1195,4 +1197,56 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     856482136
     question 2:
     224046542165867
+
+
+# Day 21
+
+
+```python
+M = input(21, arrayify=True, sample=False)
+size = len(M)
+
+# make matrix 5x bigger to stay inside
+M = Matrix(5*[row*5 for row in M])
+M = M.replace('S','.')
+
+# set up start and queues
+start = (len(M)//2, len(M[0])//2)
+visited = set()
+queue = [start]
+
+# save values for interpolation
+y = []
+x = [65, 65+size, 65+2*size]
+
+for i in range(1, x[-1]+1):
+    to_visit = set()
+    while queue:
+        loc = queue.pop()
+        visited.add(loc) 
+        neighbours = M.get_neighbors(loc, diag=False)
+        for n in neighbours:
+            if M[n] in ('.','S'):
+                to_visit.add(n)
+    queue = to_visit
+    if i in x:
+        y.append(len(to_visit))
+    if i==64:
+        q1 = len(to_visit)
+
+# quadratic interpolation from
+# f(0) = 65 steps, f(1) = 65+131 steps and f(2) = 65+2*131 
+x0, x1, x2 = 0, 1, 2
+diff10 = (y[1]-y[0])/(x1-x0)
+diff21 = (y[2]-y[1])/(x2-x1)
+a, b, c = (diff21-diff10)/(x2-x0), diff10, y[0]
+x = 26501365//size
+q2 = a*(x-x1)*(x-x0)+b*(x-x0)+c
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    3758
+    question 2:
+    621494544278648.0
 
