@@ -32,6 +32,8 @@
 
 [Day 16](#day-16)
 
+[Day 17](#day-17)
+
 [Day 18](#day-18)
 
 [Day 19](#day-19)
@@ -40,10 +42,21 @@
 
 [Day 21](#day-21)
 
+[Day 22](#day-22)
+
+[Day 23](#day-23)
+
+[Day 23](#day-24)
+
+[Day 25](#day-25)
+
 
 ```python
 import re
-from collections import Counter, deque
+import sys
+import heapq
+import random
+from collections import Counter, deque, defaultdict
 from itertools import combinations
 from functools import cache
 from math import lcm
@@ -444,7 +457,6 @@ for node in nodes.splitlines():
     graph[name] = {}
     graph[name]['L'] = left
     graph[name]['R'] = right
-
 
 position, goal, steps = 'AAA', 'ZZZ', 0
 while position!=goal:
@@ -928,6 +940,49 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
 
 # Day 17
 
+
+```python
+inp = input(17, matrixify=True, sample=False)
+rows, cols = inp.shape
+
+def traverse(part2=False):
+    queue = [(0, 0, 0, -1, -1)]
+    costs = {}
+    while queue:
+        dist, r, c, dir, steps = heapq.heappop(queue)
+        if (r, c, dir, steps) in costs:
+            continue
+        else:
+            costs[(r, c, dir, steps)] = dist
+        for i in range(4):
+            rr, cc, new_dir = walk(r, c, i)
+            new_steps = 1 if new_dir != dir else steps + 1
+            isnt_reverse = (new_dir + 2) % 4 != dir
+            p1 = new_steps <= 3
+            p2 = new_steps <= 10 and (new_dir == dir or steps >= 4 or steps == -1)
+            valid = p2 if part2 else p1
+
+            if 0 <= rr < rows and 0 <= cc < cols and isnt_reverse and valid:
+                cost = int(inp[rr, cc])
+                if (rr, cc, new_dir, new_steps) not in costs:
+                    heapq.heappush(queue, (dist + cost, rr, cc, new_dir, new_steps))
+    ans = 10**9
+    for (r, c, dir, steps), v in costs.items():
+        if r == rows - 1 and c == cols - 1 and (steps >= 4 or not part2):
+            ans = min(ans, v)
+    return ans
+
+q1 = traverse()
+q2 = traverse(True)
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    1110
+    question 2:
+    1294
+
+
 # Day 18
 
 
@@ -1249,4 +1304,321 @@ print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
     3758
     question 2:
     621494544278648.0
+
+
+# Day 22
+
+
+```python
+inp = input(22, listify=True, sample=True)
+
+class Brick:
+    def __init__(self, line, name):
+        x0, y0, z0, x1, y1, z1 = map(int, re.findall(r'\d+', line))
+        self.h = z1 - z0 + 1
+        self.z = z0
+        self.name = name
+        self.cubes = [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
+
+# parse all bricks
+bricks = sorted([Brick(line, i) for i, line in enumerate(inp)], key=lambda x: x.z)
+
+# get max dimensions for grid
+xmax, ymax, zmax = 0, 0, 0
+for line in inp:
+    x0, y0, z0, x1, y1, z1 = map(int, re.findall(r'\d+', line))
+    xmax = max(xmax, x1)
+    ymax = max(ymax, y1)
+    zmax = max(zmax, z1)
+
+# create stack which is a list of matrixes
+# q1 - return stack
+# q2 - return height of all bricks
+def stack_bricks(bricks, q1=True):
+    stack = [Matrix([['.' for _ in range(ymax + 1)] for _ in range(xmax + 1)]) for _ in range(zmax)]
+    all_heights = {}
+    for brick in bricks:
+        height = len(stack) - 1
+        while height > 0:
+            level = stack[height - 1]
+            if any(level[cube] != '.' for cube in brick.cubes):
+                break
+            height -= 1
+        all_heights[brick.name] = height
+        for h in range(height, height + brick.h):
+            for cube in brick.cubes:
+                stack[h][cube] = brick.name
+    return stack if q1 else all_heights
+
+# create stack
+stack = stack_bricks(bricks)
+q1 = 0
+for level, under in zip(stack[::-1], stack[-2::-1]):
+    # get bricks on level and level below
+    chars = level.unique()
+    chars_under = under.unique()
+    supps = set()
+    # get bricks which are single-handedly supporting another brick
+    for char in chars:
+        if char == '.':
+            continue
+        supp = {under[loc] for loc in level.get_locs(char) if under[loc] != '.'}
+        if len(supp) == 1:
+            supps |= supp
+    # add all bricks which were below and found to not be carrying
+    q1 += sum(char != '.' and char not in supps for char in chars_under)
+
+# get height of all original bricks
+starting = stack_bricks(bricks, False)
+q2 = 0
+for i in range(len(bricks)):
+    # create stack without a single bricks
+    total_height = stack_bricks(bricks[:i] + bricks[i + 1:], False)
+    # check how many bricks have moved
+    for j in starting.keys():
+        if j not in total_height:
+            total_height[j] = starting[j]
+        if starting[j] > total_height[j]:
+            q2 += 1
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    5
+    question 2:
+    7
+
+
+# Day 23
+
+
+```python
+def create_graph(input_map):
+    graph = {}
+    slopes = {'^':'U', '>':'R', 'v':'D', '<':'L'}
+    for r in range(len(input_map)):
+        for c in range(len(input_map[0])):
+            if input_map[r, c] == '.':
+                graph[(r, c)] = set()
+                neighbors = input_map.get_neighbors((r, c), direction=True)
+                for r_, c_, dir_ in neighbors:
+                    val = input_map[r_, c_]
+                    if val == '.':
+                        graph[(r, c)].add((r_, c_))
+                    elif val in slopes and slopes[val] == dir_:
+                        graph[(r, c)].add((r_, c_))
+            elif input_map[(r, c)] != '#':
+                graph[(r, c)] = set()
+                neighbors = input_map.get_neighbors((r, c), direction=True) 
+                for r_, c_, dir_ in neighbors:
+                    if slopes[input_map[(r, c)]] == dir_ and input_map[r_, c_] != '#':
+                        graph[(r, c)].add((r_, c_))
+    return graph
+
+def condense_graph(graph, part2=False):
+    new_graph = {node: {neighbor: 1 for neighbor in neighbors} for node, neighbors in graph.items()}
+    if part2:
+        while True:
+            found = 0
+            new_graph2 = new_graph.copy()
+            for node, neighbours in new_graph.items():
+                try:
+                    if len(neighbours) == 2:
+                        found += 1
+                        n1, n2 = neighbours
+                        new_dist = new_graph2[node][n1] + new_graph2[node][n2]
+                        del new_graph2[node], new_graph2[n1][node], new_graph2[n2][node]
+                        new_graph2[n1][n2] = new_graph2[n2][n1] = new_dist
+                    else:
+                        continue
+                except:
+                    continue
+            new_graph = new_graph2
+            if found == 0:
+                break
+    return new_graph
+
+def find_all_paths(graph, start, end, path=[], length=0, visited=None):
+    if visited is None:
+        visited = set()
+    path = path + [start]
+    visited.add(start)
+    if start == end:
+        return [(path, length)]
+    paths = []
+    for neighbor, dist in graph[start].items():
+        if neighbor not in visited:
+            extended_paths = find_all_paths(graph, neighbor, end, path, length + dist, visited.copy())
+            paths.extend(extended_paths)
+    return paths
+
+inp = input(23, matrixify=True, sample=False)
+
+graph = condense_graph(create_graph(inp))
+start, end = (0, 1), (140, 139)
+paths = find_all_paths(graph, start, end)
+q1 = max([path[1] for path in paths])
+
+for char in '<>v^':
+    inp.replace(char, '.')
+graph = condense_graph(create_graph(inp), True)
+paths = find_all_paths(graph, start, end)
+q2 = max([path[1] for path in paths])
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    2186
+    question 2:
+    6802
+
+
+# Day 24
+
+
+```python
+inp = input(24, listify=True, sample=False)
+inp = [tuple(map(int, re.findall('[-0-9]+', i))) for i in inp]
+
+lower=200000000000000
+upper=400000000000000
+
+q1 = 0
+for a, b in combinations(inp, 2):
+    x1, y1, _, dx1, dy1, _ = a
+    x2, y2, _, dx2, dy2, _ = b
+    a1 = (dy1/dx1)
+    a2 = (dy2/dx2)
+    if a1 == a2:
+        continue
+    b1 = y1 - (a1*x1)
+    b2 = y2 - (a2*x2)
+    x = (b2-b1)/(a1-a2)
+    y = a1*x + b1
+    if (x-x1)/dx1<0 or (x-x2)/dx2<0:
+        continue
+    if lower<=x<=upper and lower<=y<=upper:
+        q1 += 1
+
+xspeeds = defaultdict(list)
+yspeeds = defaultdict(list)
+zspeeds = defaultdict(list)
+for i in inp:
+    x, y, z, dx, dy, dz = i
+    xspeeds[dx].append(x)
+    yspeeds[dy].append(y)
+    zspeeds[dz].append(z)
+
+hail = []
+for speed in [xspeeds, yspeeds, zspeeds]:
+    speed = {key:sorted(value) for key, value in speed.items() if len(value)>1}
+    speed = {key:(value[-1]-value[0]) for key, value in speed.items()}
+    for i in range(-500, 500):
+        correct = True
+        for key, value in speed.items():
+            if i==key or i==-key:
+                continue
+            if value%(key-i)!=0:
+                correct = False
+                break
+        if correct:
+            hail.append(i)
+
+dx, dy, dz = hail
+x0, y0, z0, dx0, dx0, dz0 = inp[0]
+x1, y1, z1, dx1, dy1, dz1 = inp[1]
+a0 = (dx0-dy)/(dx0-dx)
+a1 = (dy1-dy)/(dx1-dx)
+c0 = y0 - (a0*x0)
+c1 = y1 - (a1*x1)
+x = int((c1-c0)/(a0-a1))
+y = int(a0*x + c0)
+t = (x - x0)//(dx0-dx)
+z = z0 + (dz0 - dz)*t
+q2 = sum([x, y, z])
+
+print(f'question 1:\n{q1}\nquestion 2:\n{q2}')
+```
+
+    question 1:
+    17244
+    question 2:
+    1025019997186820
+
+
+# Day 25
+
+
+```python
+def find_frequent(graph, n_frequent=3, iterations=10_000):
+    frequency = defaultdict(int)
+    for _ in range(iterations):
+        a = random.choice(list(graph.keys()))
+        b = random.choice(list(graph.keys()))
+        path = dijkstra(graph, a, b)
+        edges = [(a, b) for a,b in zip(path[:-1],path[1:])]
+        for edge in edges:
+            frequency[edge]+=1
+    frequency = {value:key for key, value in frequency.items()}
+    edges = []
+    seen = set()
+    while len(edges)<n_frequent:
+        for freq in sorted(frequency.keys(), reverse=True):
+            edge = frequency[freq]
+            a, b = edge
+            if a in seen or b in seen:
+                continue
+            else:
+                seen.add(a)
+                seen.add(b)
+                edges.append(edge)
+                break    
+    return edges
+
+def count_reachable_nodes(graph, start_node):
+    visited = set()
+    def dfs(node):
+        visited.add(node)
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                dfs(neighbor)
+    dfs(start_node)
+    return len(visited)
+
+inp = [re.findall('\w+',i) for i in input(25, listify=True, sample=False)]
+
+# parse graph from input
+graph = defaultdict(list)
+for line in inp:
+    for node in line[1:]:
+        graph[line[0]].append(node)
+        graph[node].append(line[0])
+
+# find top 3 most used edges when traversing
+# graph from random nodes
+edges = find_frequent(graph)
+
+# re-create graph without these edges
+graph = defaultdict(list)
+for line in inp:
+    for node in line[1:]:
+        if (line[0], node) in edges or (node, line[0]) in edges:
+            continue
+        else:
+            graph[line[0]].append(node)
+            graph[node].append(line[0])
+
+# see number of reachable nodes from both sides
+# of the first removed edge
+nodes_a = count_reachable_nodes(graph, edges[0][0]) 
+nodes_b = count_reachable_nodes(graph, edges[0][1])
+q1 = nodes_a * nodes_b
+
+print(f'question 1:\n{q1}')
+```
+
+    question 1:
+    571753
 

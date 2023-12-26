@@ -1,3 +1,6 @@
+import heapq
+
+
 def input(
         day: int,
         sample: bool=True,
@@ -37,7 +40,13 @@ class matrix:
                 if char==s:
                     locs.append((x, y))
         return locs
-    
+
+    @staticmethod
+    def unique(
+            M:list[list],
+        ) -> set:
+        return set(sum(M, []))
+
     @staticmethod
     def replace(
             M:list[list],
@@ -82,7 +91,8 @@ class matrix:
     def get_neighbors(
             M:list[list],
             loc:tuple[int],
-            diag:bool=False
+            diag:bool=False,
+            direction:bool=False
         ):
         """
         get loc of neighbouring cells
@@ -93,11 +103,16 @@ class matrix:
         # add horizontal and vertical neighbours
         x = [1, 0, -1, 0]
         y = [0, 1, 0, -1]
+        dirs = ['D', 'R', 'U', 'L']
         for i in range(4):
             x_ = loc[0] + x[i]
             y_ = loc[1] + y[i]
+            dir_ = dirs[i]
             if 0<=x_<len(M) and 0<=y_<len(M[1]):
-                neighbors.append((x_, y_))
+                if not direction:
+                    neighbors.append((x_, y_))
+                else:
+                    neighbors.append((x_, y_, dir_))
         # add diagonal neighbors
         if diag:
             x = [1, 1, -1, -1]
@@ -139,6 +154,7 @@ class Matrix(list):
     def __init__(self, M:list[list]):
         self.M = M
         self.index = -1
+        self.shape = (len(M), len(M[0]))
 
     def __getitem__(self, loc):
         """
@@ -189,11 +205,14 @@ class Matrix(list):
     def get_locs(self, s:...):
         return matrix.get_locs(self.M, s)
     
+    def unique(self):
+        return matrix.unique(self.M)
+    
     def count(self, s:...):
         return matrix.count(self.M, s)
     
-    def get_neighbors(self, loc:tuple[int], diag:bool):
-        return matrix.get_neighbors(self.M, loc, diag)
+    def get_neighbors(self, loc:tuple[int], diag:bool=False, direction:bool=False):
+        return matrix.get_neighbors(self.M, loc, diag, direction)
 
     def replace(self, s1:..., s2:...):
         return Matrix(matrix.replace(self.M, s1, s2))
@@ -208,3 +227,32 @@ class Matrix(list):
         return Matrix(matrix.floodfill(self.M, loc, border, diag))
     
 sample_matrix = Matrix([[1,1,1,1], [2,2,2,2], [3,3,3,3]])
+
+
+def dijkstra(graph, start, end):
+    # Initialize distances to all nodes as infinity
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    pq = [(0, start)]
+    while pq:
+        current_distance, current_node = heapq.heappop(pq)
+        if current_node == end:
+            break
+        for neighbor in graph[current_node]:
+            distance = current_distance + 1
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(pq, (distance, neighbor))
+    
+    # Reconstruct the shortest path
+    shortest_path = []
+    node = end
+    while node != start:
+        shortest_path.append(node)
+        for neighbor in graph[node]:
+            if distances[node] == distances[neighbor] + 1:
+                node = neighbor
+                break
+    shortest_path.append(start)
+    shortest_path.reverse()
+    return shortest_path if distances[end] != float('inf') else None
